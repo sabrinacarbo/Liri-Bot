@@ -1,26 +1,18 @@
 //Loading modules
 var Twitter = require('twitter');
-var spotify = require('node-spotify-api');
+var Spotify = require('node-spotify-api');
 var request = require('request');
 var keys = require("./keys.js");
 
 var inputCommand = process.argv[2];
-// var commandParam = process.argv[3];
-
-// var tweetsArray = [];
+var searchInput = process.argv.slice(3).join(" ");
 
 // var defaultMovie = "Mr. Nobody";
-// var defaultSong = "The Sign";
+var defaultSong = "The Sign";
 
-// require("dotenv").config();
-
-var input = process.argv[2];
-
-
-// Variables to import from keys.js         ??????????????????????????????????????????????????
-// var spotify = new Spotify(keys.spotify);
+// Variables to import from keys.js
 var client = new Twitter(keys.twitter);
-// console.log(keys.twitter);
+
 
 function commands(action) {
     switch (action) {
@@ -28,13 +20,13 @@ function commands(action) {
             twitter();
             break;
 
-            // case "spotify-this-song":
-            //     spotify();
-            //     break;
+        case "spotify-this-song":
+            spotifySong(searchInput);
+            break;
 
-            // case "movie-this":
-            //     movie();
-            //     break;
+            case "movie-this":
+                movieThis();
+                break;
 
             // case "do-what-it-says":
             //     doIt();
@@ -58,14 +50,14 @@ function twitter() {
             //console.log(tweet);
             tweetArray = tweet;
 
-            for(i=0; i<tweetArray.length; i++){
-                console.log('');
+            for (i = 0; i < tweetArray.length; i++) {
+                console.log("");
                 console.log("Created at: " + tweetArray[i].created_at);
+                console.log("");
                 console.log("Text: " + tweetArray[i].text);
-                console.log('');
+                console.log("");
             }
-        }
-        else{
+        } else {
             console.log(error);
         }
     });
@@ -74,41 +66,49 @@ function twitter() {
 
 // * `spotify-this-song`
 // * This will show the following information about the song in your terminal/bash window
-
 // * Artist(s)
-
 // * The song's name
-
 // * A preview link of the song from Spotify
-
 // * The album that the song is from
-
 // * If no song is provided then your program will default to "The Sign" by Ace of Base.
 
-// * You will utilize the [node-spotify-api](https://www.npmjs.com/package/node-spotify-api) package in order to retrieve song information from the Spotify API.
+function spotifySong(song) {
 
-// * Like the Twitter API, the Spotify API requires you sign up as a developer to generate the necessary credentials. You can follow these steps in order to generate a **client id** and **client secret**:
+    var spotify = new Spotify(keys.spotify);
 
-// * Step One: Visit <https://developer.spotify.com/my-applications/#!/>
+    spotify.search({
+        type: 'track',
+        query: song,
+        limit: 20
+    }, function (err, data) {
+        if (err) {
+            return console.log('Error occurred: ' + err);
+        }
 
-// * Step Two: Either login to your existing Spotify account or create a new one (a free account is fine) and log in.
+        // if(song === ""){
+        // console.log(defaultSong);
+        // }
 
-// * Step Three: Once logged in, navigate to <https://developer.spotify.com/my-applications/#!/applications/create> to register a new application to be used with the Spotify API. You can fill in whatever you'd like for these fields. When finished, click the "complete" button.
+        var songObject = data.tracks.items[0];
+        // console.log(songObject);
 
-// * Step Four: On the next screen, scroll down to where you see your client id and client secret. Copy these values down somewhere, you'll need them to use the Spotify API and the [node-spotify-api package](https://www.npmjs.com/package/node-spotify-api).
+        console.log("");
+            console.log("Artist(s): " + songObject.artists[0].name);
+            console.log("");
+            console.log("Song Name: " + songObject.name);
+            console.log("");
+            console.log("Preview Link: " + songObject.preview_url);
+            console.log("");
+            console.log("Album: " + songObject.album.name);
+            console.log("");
+    });
 
-// function spotify() {
-
-
-
-// };
-
+};
 
 
 // * `movie-this`
 // * This will output the following information to your terminal/bash window:
 
-// ```
 // * Title of the movie.
 // * Year the movie came out.
 // * IMDB Rating of the movie.
@@ -117,7 +117,6 @@ function twitter() {
 // * Language of the movie.
 // * Plot of the movie.
 // * Actors in the movie.
-// ```
 
 // * If the user doesn't type a movie in, the program will output data for the movie 'Mr. Nobody.'
 
@@ -127,11 +126,37 @@ function twitter() {
 
 // * You'll use the request package to retrieve data from the OMDB API. Like all of the in-class activities, the OMDB API requires an API key. You may use `trilogy`.
 
-// function movie() {
+function movieThis(movie) {
 
+    var queryUrl = "http://www.omdbapi.com/?t=" + searchInput + "&y=&plot=short&apikey=trilogy";
 
+	request(queryUrl, function(error, response, body) {
+		if (movie === undefined){
+        	return movie = "Mr Nobody";
+    	}
+		if (!error && response.statusCode === 200) {
+            var body = JSON.parse(body);
 
-// };
+            console.log("");
+            console.log("Title: " + body.Title);
+            console.log("");
+            console.log("Release Year: " + body.Year);
+            console.log("");
+            console.log("IMDB Rating: " + body.imdbRating);
+            console.log("");
+            console.log("Rotten Tomatoes Rating: " + body.Ratings[1].Value);
+            console.log("");
+            console.log("Country: " + body.Country);
+            console.log("");
+            console.log("Language: " + body.Language);
+            console.log("");
+            console.log("Plot: " + body.Plot);
+            console.log("");
+            console.log("Actors: " + body.Actors);
+            console.log("");
+		}
+	});
+};
 
 
 
@@ -181,23 +206,5 @@ function twitter() {
 
 
 
-//reading txt files:                                  ============ MAY NEED ===============
-// fs.readFile("movies.txt", "utf8", function(error, data) {
-
-//     // If the code experiences any errors it will log the error to the console.
-//     if (error) {
-//       return console.log(error);
-//     }
-
-//     // We will then print the contents of data
-//     console.log(data);
-
-//     // Then split it by commas (to make it more readable)
-//     var dataArr = data.split(",");
-
-//     // We will then re-display the content as an array for later use.
-//     console.log(dataArr);
-
-//   });
 
 commands(inputCommand);
