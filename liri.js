@@ -3,12 +3,10 @@ var Twitter = require('twitter');
 var Spotify = require('node-spotify-api');
 var request = require('request');
 var keys = require("./keys.js");
+var fs = require("fs");
 
 var inputCommand = process.argv[2];
 var searchInput = process.argv.slice(3).join(" ");
-
-// var defaultMovie = "Mr. Nobody";
-var defaultSong = "The Sign";
 
 // Variables to import from keys.js
 var client = new Twitter(keys.twitter);
@@ -21,16 +19,22 @@ function commands(action) {
             break;
 
         case "spotify-this-song":
+            if (searchInput === undefined || searchInput === "") {
+                searchInput = "The Sign";
+            }
             spotifySong(searchInput);
             break;
 
-            case "movie-this":
-                movieThis();
-                break;
+        case "movie-this":
+            if (searchInput === undefined || searchInput === "") {
+                searchInput = "Mr Nobody";
+            }
+            movieThis(searchInput);
+            break;
 
-            // case "do-what-it-says":
-            //     doIt();
-            //     break;
+            case "do-what-it-says":
+                doIt();
+                break;
     };
 };
 
@@ -85,22 +89,17 @@ function spotifySong(song) {
             return console.log('Error occurred: ' + err);
         }
 
-        // if(song === ""){
-        // console.log(defaultSong);
-        // }
-
         var songObject = data.tracks.items[0];
-        // console.log(songObject);
 
         console.log("");
-            console.log("Artist(s): " + songObject.artists[0].name);
-            console.log("");
-            console.log("Song Name: " + songObject.name);
-            console.log("");
-            console.log("Preview Link: " + songObject.preview_url);
-            console.log("");
-            console.log("Album: " + songObject.album.name);
-            console.log("");
+        console.log("Artist(s): " + songObject.artists[0].name);
+        console.log("");
+        console.log("Song Name: " + songObject.name);
+        console.log("");
+        console.log("Preview Link: " + songObject.preview_url);
+        console.log("");
+        console.log("Album: " + songObject.album.name);
+        console.log("");
     });
 
 };
@@ -130,11 +129,9 @@ function movieThis(movie) {
 
     var queryUrl = "http://www.omdbapi.com/?t=" + searchInput + "&y=&plot=short&apikey=trilogy";
 
-	request(queryUrl, function(error, response, body) {
-		if (movie === undefined){
-        	return movie = "Mr Nobody";
-    	}
-		if (!error && response.statusCode === 200) {
+    request(queryUrl, function (error, response, body) {
+
+        if (!error && response.statusCode === 200) {
             var body = JSON.parse(body);
 
             console.log("");
@@ -154,13 +151,9 @@ function movieThis(movie) {
             console.log("");
             console.log("Actors: " + body.Actors);
             console.log("");
-		}
-	});
+        }
+    });
 };
-
-
-
-
 
 // * `do-what-it-says`
 // * Using the `fs` Node package, LIRI will take the text inside of random.txt and then use it to call one of LIRI's commands.
@@ -170,41 +163,18 @@ function movieThis(movie) {
 // * Feel free to change the text in that document to test out the feature for other commands.
 
 
-// function doIt() {
+function doIt() {
 
+    fs.readFile('random.txt', 'utf8', function(err, data){
 
+		if (err){ 
+			return console.log(err);
+		}
 
-// };
+		var dataArr = data.split(',');
 
+		commands(dataArr[0], dataArr[1]);
+	});
+};
 
-
-
-// ### BONUS
-
-// * In addition to logging the data to your terminal/bash window, output the data to a .txt file called `log.txt`.
-
-// * Make sure you append each command you run to the `log.txt` file. 
-
-// * Do not overwrite your file each time you run a command.
-
-// Core node package for reading and writing files   ==================== BONUS ====================
-// var fs = require("fs");
-
-// // This block of code will create a file called "movies.txt".
-// // It will then print "Inception, Die Hard" in the file
-// fs.writeFile("movies.txt", "Inception, Die Hard", function(err) {
-
-//   // If the code experiences any errors it will log the error to the console.
-//   if (err) {
-//     return console.log(err);
-//   }
-
-//   // Otherwise, it will print: "movies.txt was updated!"
-//   console.log("movies.txt was updated!");
-
-// });
-
-
-
-
-commands(inputCommand);
+commands(inputCommand, searchInput);
